@@ -1,0 +1,3 @@
+<?php
+
+define('MATTERMOST_KOOK_URL', '');

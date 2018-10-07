@@ -1,4 +1,10 @@
-# international-days
+# internationalDays
+
+Page web indiquant les journées internationales pour le jour en cours et 
+permettant de lister les journées en fonction des mois.
+
+Le projet contient également un script permettant d'envoyer les informations dans 
+un channel Mattermost
 
 ## Project setup
 ```
