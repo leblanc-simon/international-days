@@ -37,6 +37,7 @@ import moment from 'moment'
 import Loader from './Loader.vue'
 
 moment.locale('fr')
+const apiBaseUrl = ''
 
 const previousMonth = currentMonth => {
     if (currentMonth === 0) {
@@ -86,7 +87,7 @@ export default {
         }
     },
     created () {
-        axios.get('http://localhost/international-days/public/api.php?month=' + (this.currentMonth + 1))
+        axios.get(apiBaseUrl + '/api.php?month=' + (this.currentMonth + 1))
             .then(response => {
                 this.loaded = true
                 this.internationalDays = convertByDay(response.data)
@@ -94,7 +95,7 @@ export default {
     },
     methods: {
         next () {
-            axios.get('http://localhost/international-days/public/api.php?month=' + (nextMonth(this.currentMonth) + 1))
+            axios.get(apiBaseUrl + '/api.php?month=' + (nextMonth(this.currentMonth) + 1))
                 .then(response => {
                     this.internationalDays = convertByDay(response.data)
                     this.previousMonth = this.currentMonth
@@ -103,7 +104,7 @@ export default {
                 })
         },
         previous () {
-            axios.get('http://localhost/international-days/public/api.php?month=' + (previousMonth(this.currentMonth) + 1))
+            axios.get(apiBaseUrl + '/api.php?month=' + (previousMonth(this.currentMonth) + 1))
                 .then(response => {
                     this.internationalDays = convertByDay(response.data)
                     this.nextMonth = this.currentMonth

@@ -24,6 +24,7 @@ import axios from 'axios'
 import moment from 'moment'
 import Loader from './Loader.vue'
 
+const apiBaseUrl = ''
 moment.locale('fr')
 
 export default {
@@ -39,7 +40,7 @@ export default {
         }
     },
     created () {
-        axios.get('http://localhost/international-days/public/api.php')
+        axios.get(apiBaseUrl + '/api.php')
             .then(response => {
                 this.loaded = true
                 this.internationalDays = response.data.datas
