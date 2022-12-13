@@ -1,6 +1,6 @@
 <template>
     <div class="international-day" v-if="loaded">
-        <div class="title">{{ date | formatedDate }}</div>
+        <div class="title">{{ formatedDate(date) }}</div>
         <div v-if="internationalDays.length" class="">
             <ul>
                 <li v-for="internationalDay in internationalDays"
@@ -15,23 +15,21 @@
         </div>
     </div>
     <div v-else>
-        <Loader></Loader>
+        <waiting-loader></waiting-loader>
     </div>
 </template>
 
 <script>
 import axios from 'axios'
 import moment from 'moment'
-import Loader from './Loader.vue'
+import WaitingLoader from './WaitingLoader.vue'
 
 const apiBaseUrl = ''
 moment.locale('fr')
 
 export default {
     name: 'InternationalDay',
-    components: {
-        Loader
-    },
+    components: { WaitingLoader },
     data () {
         return {
             loaded: false,
@@ -46,14 +44,6 @@ export default {
                 this.internationalDays = response.data.datas
                 this.date = response.data.date
             })
-    },
-    filters: {
-        formatedDate (date) {
-            if (!date) {
-                return null
-            }
-            return moment(date).format('dddd LL')
-        }
     }
 }
 </script>

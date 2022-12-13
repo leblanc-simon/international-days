@@ -1,6 +1,7 @@
 <?php
 
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
 
 $cache_filename = __DIR__.'/../cache/'.date('Y').'.php';
 
@@ -10,7 +11,7 @@ if (false === file_exists($cache_filename)) {
         echo json_encode([
             'error' => 'Fail to get datas',
         ]);
-        die;
+        exit;
     }
 }
 
@@ -18,7 +19,7 @@ require_once $cache_filename;
 
 if (true === isset($_GET['month']) && true === is_numeric($_GET['month'])) {
     echo json_encode($international_days_by_month[$_GET['month']] ?? []);
-    die;
+    exit;
 }
 
 // Default : get for today

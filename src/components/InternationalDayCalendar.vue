@@ -2,11 +2,11 @@
     <div class="international-day-calendar" v-if="loaded">
         <nav>
             <div class="previous">
-                <span v-if="previousMonth >= 0" v-on:click="previous" class="link">{{ previousMonth | formatedMonth }}</span>
+                <span v-if="previousMonth >= 0" v-on:click="previous" class="link">{{ formatedMonth(previousMonth) }}</span>
             </div>
-            <div class="current"><span>{{ currentMonth | formatedMonth }}</span></div>
+            <div class="current"><span>{{ formatedMonth(currentMonth) }}</span></div>
             <div class="next">
-                <span v-if="nextMonth" v-on:click="next" class="link">{{ nextMonth | formatedMonth }}</span>
+                <span v-if="nextMonth" v-on:click="next" class="link">{{ formatedMonth(nextMonth) }}</span>
             </div>
         </nav>
         <div v-if="internationalDays.length" class="">
@@ -14,7 +14,7 @@
                 <li v-for="internationalDayGrouped in internationalDays"
                     v-bind:key="internationalDayGrouped.date"
                 >
-                    <span class="date">{{ internationalDayGrouped.date | formatedDate }} :</span>
+                    <span class="date">{{ formatedDate(internationalDayGrouped.date) }} :</span>
                     <ul>
                         <li v-for="internationalDay in internationalDayGrouped.internationalDays"
                             v-bind:key="internationalDay"
@@ -27,14 +27,14 @@
         </div>
     </div>
     <div v-else>
-        <Loader></Loader>
+        <waiting-loader></waiting-loader>
     </div>
 </template>
 
 <script>
 import axios from 'axios'
 import moment from 'moment'
-import Loader from './Loader.vue'
+import WaitingLoader from './WaitingLoader.vue'
 
 moment.locale('fr')
 const apiBaseUrl = ''
@@ -56,7 +56,7 @@ const nextMonth = currentMonth => {
 const convertByDay = internationalDays => {
     let currentDay
     let currentIterator = 0
-    let datas = []
+    const datas = []
     internationalDays.forEach(internationalDay => {
         if (currentDay !== internationalDay.date) {
             datas.push({
@@ -73,17 +73,17 @@ const convertByDay = internationalDays => {
 
 export default {
     name: 'InternationalDayCalendar',
-    components: {
-        Loader
-    },
+    components: { WaitingLoader },
     data () {
         const date = new Date()
+        const currentPreviousMonth = previousMonth(date.getMonth())
+        const currentNextMonth = nextMonth(date.getMonth())
         return {
             loaded: false,
             internationalDays: [],
-            previousMonth: previousMonth(date.getMonth()),
+            previousMonth: currentPreviousMonth,
             currentMonth: date.getMonth(),
-            nextMonth: nextMonth(date.getMonth())
+            nextMonth: currentNextMonth
         }
     },
     created () {
@@ -110,22 +110,7 @@ export default {
                     this.nextMonth = this.currentMonth
                     this.currentMonth = previousMonth(this.currentMonth)
                     this.previousMonth = previousMonth(this.currentMonth)
-                    console.log(this.previousMonth)
                 })
-        }
-    },
-    filters: {
-        formatedMonth (month) {
-            if (month < 0 || month > 11 || month === null) {
-                return null
-            }
-            return moment([2018, month]).format('MMMM')
-        },
-        formatedDate (date) {
-            if (!date) {
-                return null
-            }
-            return moment(date).format('dddd LL')
         }
     }
 }

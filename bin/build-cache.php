@@ -1,6 +1,6 @@
 <?php
 
-define('CACHE_DIR', __DIR__.'/../cache');
+const CACHE_DIR = __DIR__.'/../cache';
 
 if (false === is_dir(CACHE_DIR)) {
     if (false === @mkdir(CACHE_DIR, 0755) || false === is_dir(CACHE_DIR)) {
@@ -8,7 +8,7 @@ if (false === is_dir(CACHE_DIR)) {
     }
 }
 
-function buildDate($international_day)
+function buildDate($international_day): ?string
 {
     if (
         true === property_exists($international_day, 'day')
@@ -34,14 +34,14 @@ function buildDate($international_day)
     return null;
 }
 
-function buildMonth($international_day)
+function buildMonth($international_day): int
 {
     $date = buildDate($international_day);
 
     return (int) substr($date, 5, 2);
 }
 
-function buildItem($international_day)
+function buildItem($international_day): array
 {
     return [
         'date' => buildDate($international_day),
@@ -49,11 +49,11 @@ function buildItem($international_day)
     ];
 }
 
-$sortByDate = function ($item_a, $item_b) {
+$sortByDate = static function ($item_a, $item_b) {
     return strcmp($item_a['date'], $item_b['date']);
 };
 
-$international_days = json_decode(require __DIR__.'/../datas/international-days.json.php');
+$international_days = json_decode(require __DIR__.'/../datas/international-days.json.php', false, 512, JSON_THROW_ON_ERROR);
 if (false === $international_days) {
     return false;
 }

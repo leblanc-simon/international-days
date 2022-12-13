@@ -1,9 +1,20 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
 import './registerServiceWorker'
+import moment from 'moment/moment'
 
-Vue.config.productionTip = false
+const app = createApp(App)
+app.mount('#app')
+app.config.globalProperties.formatedMonth = month => {
+    if (month < 0 || month > 11 || month === null) {
+        return null
+    }
+    return moment([2018, month]).format('MMMM')
+}
 
-new Vue({
-    render: h => h(App)
-}).$mount('#app')
+app.config.globalProperties.formatedDate = date => {
+    if (!date) {
+        return null
+    }
+    return moment(date).format('dddd LL')
+}

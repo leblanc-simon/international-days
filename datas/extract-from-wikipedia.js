@@ -32,7 +32,7 @@ internationalDayFn = () => {
                     date: date,
                     name: name,
                 });
-                
+
                 continue;
             }
 
@@ -149,10 +149,10 @@ cleanData = internationalDays => {
             if (!internationalDay.date) {
                 return;
             }
-            
+
             if (dateRegex.test(internationalDay.date)) {
                 internationalDay.day = parseInt(internationalDay.date.match(dateRegex)[1], 10);
-                
+
                 return;
             }
 
@@ -164,6 +164,8 @@ cleanData = internationalDays => {
 
                 return;
             }
+
+            console.warn(internationalDay);
         });
 
         cleanInternationalDays = cleanInternationalDays.concat(datas);
