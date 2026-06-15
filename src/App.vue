@@ -22,7 +22,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="css">
 /* varela-round-regular - latin */
 @font-face {
     font-family: 'Varela Round';
