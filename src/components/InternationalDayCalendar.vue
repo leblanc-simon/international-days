@@ -33,10 +33,8 @@
 
 <script>
 import axios from 'axios'
-import moment from 'moment'
 import WaitingLoader from './WaitingLoader.vue'
 
-moment.locale('fr')
 const apiBaseUrl = ''
 
 const previousMonth = currentMonth => {

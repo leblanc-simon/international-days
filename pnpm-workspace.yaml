@@ -1,3 +1,2 @@
 allowBuilds:
-  core-js: false
-  yorkie: true
+  simple-git-hooks: true

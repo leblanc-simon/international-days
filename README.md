@@ -8,25 +8,30 @@ un channel Mattermost
 
 ## Project setup
 ```
-yarn install
+pnpm install
 ```
 
 ### Compiles and hot-reloads for development
 ```
-yarn run serve
+pnpm dev
+```
+En développement, l'API PHP est proxifiée par Vite (`/api.php` → `http://localhost:8000`
+par défaut, configurable via `VITE_API_TARGET`). Lancer un serveur PHP en parallèle :
+```
+php -S localhost:8000 -t public
 ```
 
 ### Compiles and minifies for production
 ```
-yarn run build
+pnpm build
 ```
 
-### Run your tests
+### Previews the production build
 ```
-yarn run test
+pnpm preview
 ```
 
 ### Lints and fixes files
 ```
-yarn run lint
+pnpm lint
 ```

@@ -21,11 +21,9 @@
 
 <script>
 import axios from 'axios'
-import moment from 'moment'
 import WaitingLoader from './WaitingLoader.vue'
 
 const apiBaseUrl = ''
-moment.locale('fr')
 
 export default {
     name: 'InternationalDay',

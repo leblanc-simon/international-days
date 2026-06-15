@@ -28,13 +28,13 @@ export default {
     font-family: 'Varela Round';
     font-style: normal;
     font-weight: 400;
-    src: url('../public/fonts/varela-round-v9-latin-regular.eot'); /* IE9 Compat Modes */
+    src: url('/fonts/varela-round-v9-latin-regular.eot'); /* IE9 Compat Modes */
     src: local('Varela Round Regular'), local('VarelaRound-Regular'),
-    url('../public/fonts/varela-round-v9-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-    url('../public/fonts/varela-round-v9-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-    url('../public/fonts/varela-round-v9-latin-regular.woff') format('woff'), /* Modern Browsers */
-    url('../public/fonts/varela-round-v9-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-    url('../public/fonts/varela-round-v9-latin-regular.svg#VarelaRound') format('svg'); /* Legacy iOS */
+    url('/fonts/varela-round-v9-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+    url('/fonts/varela-round-v9-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+    url('/fonts/varela-round-v9-latin-regular.woff') format('woff'), /* Modern Browsers */
+    url('/fonts/varela-round-v9-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+    url('/fonts/varela-round-v9-latin-regular.svg#VarelaRound') format('svg'); /* Legacy iOS */
 }
 html, body {
   margin: 0;
