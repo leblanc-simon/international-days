@@ -78,6 +78,10 @@ internationalDayFn = () => {
                 if (child.classList.contains('references-small')) {
                     break parseDom;
                 }
+                if (child.classList.contains('mw-heading3') && child.querySelector('h3')) {
+                    currentMonth = child.querySelector('h3').id;
+                    internationalDays[currentMonth] = [];
+                }
                 break;
         }
 

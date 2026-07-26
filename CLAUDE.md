@@ -1,0 +1,76 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Présentation
+
+Application web (Vue 3 + Vite) affichant les journées internationales du jour et permettant de parcourir celles de chaque mois. Les données proviennent de la page Wikipedia « Journée internationale » (licence CC BY-SA).
+
+## Commandes
+
+Le projet est passé de yarn à pnpm (présence de `pnpm-lock.yaml`, `yarn.lock` supprimé). Utiliser pnpm.
+
+```bash
+pnpm install          # installer les dépendances
+pnpm dev              # dev avec hot-reload (vite) — alias : pnpm serve
+pnpm build            # build de production dans dist/ (vite build)
+pnpm preview          # prévisualiser le build de production (vite preview)
+pnpm lint             # lint + fix (eslint --fix sur src/)
+```
+
+En dev, l'API PHP est proxifiée : `vite.config.js` redirige `/api.php` vers `process.env.VITE_API_TARGET` (défaut `http://localhost:8000`). Lancer un serveur PHP en parallèle, ex. `php -S localhost:8000 -t public`.
+
+**Aucun script `test`** dans `package.json` ni de suite de tests dans le dépôt.
+
+Les hooks git sont gérés par **`simple-git-hooks`** (`simple-git-hooks.pre-commit` → `pnpm exec lint-staged`). Le hook est (ré)installé par le postinstall de `simple-git-hooks` ; `lint-staged` lance `eslint --fix` sur les fichiers `*.{js,vue}` indexés. L'autorisation du script de build est dans `pnpm-workspace.yaml` (`allowBuilds.simple-git-hooks: true`).
+
+## Architecture
+
+L'application combine un **frontend Vue 3** statique et un **backend PHP minimal** servi à côté du build. Le frontend appelle `api.php` via axios ; il n'y a pas de serveur Node en production.
+
+### Flux de données (essentiel à comprendre)
+
+1. **Extraction** — `datas/extract-from-wikipedia.js` est un script à coller dans la console du navigateur sur la page Wikipedia. Il parse le DOM (`#mw-content-text`), regroupe les journées par mois, puis `cleanData()` normalise chaque entrée : ajoute `month` (numérique), `day` (date fixe) ou `customDay` (date relative en anglais, ex. `"third sunday of may"`, prête pour `new DateTime()` en PHP).
+2. **Données sources** — la sortie est copiée à la main dans `datas/international-days.json.php` (liste à plat) et `datas/international-days-by-month.json.php` (groupé par mois français). Ce sont des fichiers PHP qui `return` un heredoc JSON ; ils portent en commentaire l'année de référence.
+3. **Cache** — `bin/build-cache.php` lit `international-days.json.php`, résout chaque entrée en date `Y-m-d` pour **l'année courante** (`buildDate()` gère `day`/`month` fixes et `customDay` relatifs), puis écrit `cache/<ANNÉE>.php` contenant deux tableaux : `$international_days` (indexé par date) et `$international_days_by_month` (indexé par mois numérique, trié par date). Le cache est régénéré automatiquement à chaque changement d'année.
+4. **API** — `public/api.php` charge `cache/<ANNÉE>.php` (le construit s'il manque) et répond en JSON :
+   - sans paramètre → `{ date, datas }` pour aujourd'hui ;
+   - `?month=N` (1-12) → liste des journées du mois.
+
+### Frontend
+
+- `src/main.js` : crée l'app Vue 3, monte `#app`, configure **dayjs** (locale `fr` + plugin `localizedFormat`, défini une seule fois globalement) et expose `formatedMonth`/`formatedDate` comme `globalProperties`.
+- `src/components/InternationalDay.vue` : appelle `GET /api.php` (journées du jour).
+- `src/components/InternationalDayCalendar.vue` : appelle `GET /api.php?month=N`, navigation mois précédent/suivant ; `convertByDay()` regroupe la liste plate par date pour l'affichage.
+- `apiBaseUrl` est codé en dur à `''` dans les deux composants (API servie sur la même origine que le build).
+- `index.html` est à la **racine** du projet (point d'entrée Vite), pas dans `public/`. Les assets de `public/` (polices, icônes, `loader.svg`, `api.php`) se référencent en chemin **absolu** (`/fonts/...`, `/img/...`) et sont copiés tels quels dans `dist/`.
+- PWA activée via **`vite-plugin-pwa`** (config dans `vite.config.js` : `registerType: 'autoUpdate'`, `injectRegister: 'auto'` — la registration du service worker est injectée automatiquement, il n'y a plus de `registerServiceWorker.js`). Le `manifest.webmanifest` est généré par le plugin. SW en production uniquement.
+
+### Publication Mattermost
+
+`bin/publish_mattermost.php` (script CLI, ex. cron quotidien) lit le cache, formate les journées du jour et POST un payload vers `MATTERMOST_KOOK_URL`. Cette constante est définie dans `bin/config.php` (gitignored ; copier depuis `bin/config.php.dist`).
+
+## Mise à jour annuelle des données
+
+### Automatique (recommandé)
+
+`bin/update-datas.php` automatise toute la procédure : il récupère le HTML rendu de l'article via l'API MediaWiki (`action=parse`), applique la même logique d'extraction que `extract-from-wikipedia.js` (avec `DOMDocument`/`DOMXPath`, sans dépendance externe) et réécrit les deux fichiers `datas/*.json.php` dans leur format exact.
+
+```bash
+php bin/update-datas.php                 # met à jour les deux fichiers (année courante)
+php bin/update-datas.php --rebuild-cache # + supprime cache/<ANNÉE>.php pour forcer sa régénération
+php bin/update-datas.php --year=2027     # force l'année de référence du commentaire
+```
+
+Le script affiche le nombre de journées extraites et **liste les entrées dont la date n'a pas pu être résolue** (`day`/`customDay` absents — ex. « 28 ou 29 février », « En juin », équinoxes). Ces cas, déjà signalés par `console.warn` dans le script JS d'origine, sont conservés tels quels et doivent être corrigés/complétés à la main si besoin.
+
+### Manuelle (méthode historique)
+
+1. Exécuter `datas/extract-from-wikipedia.js` dans la console sur la page Wikipedia.
+2. Remplacer le contenu JSON des deux fichiers `datas/*.json.php` (mettre à jour le commentaire d'année).
+3. Supprimer `cache/<ANNÉE>.php` (ou laisser `build-cache.php` le régénérer) — `cache/` est gitignored.
+
+## Conventions
+
+- ESLint : config `@vue/standard` + `plugin:vue/essential` (`.eslintrc.js`, format eslintrc classique, eslint 8), **indentation 4 espaces** (`indent: ['error', 4, { SwitchCase: 1 }]`). `no-console`/`no-debugger` en erreur uniquement en production.
+- `cache/`, `dist/`, `bin/config.php` et les fichiers `.env*.local` sont gitignored.
