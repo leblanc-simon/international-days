@@ -14,8 +14,21 @@ import { useRegisterSW } from 'virtual:pwa-register/vue'
 // faut lui redemander de rafraîchir les mois que l'utilisateur n'ouvre pas.
 const WARM_KEY = 'api-cache-warmed-on'
 
+// Jour local. `toISOString()` renverrait la date UTC, décalée d'un jour une
+// partie de la nuit en heure française : le garde-fou porterait alors la
+// veille et le rafraîchissement se déclencherait deux fois.
+const localDay = () => {
+    const now = new Date()
+
+    return [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+    ].join('-')
+}
+
 const warmApiCacheOncePerDay = registration => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDay()
 
     try {
         if (window.localStorage.getItem(WARM_KEY) === today) {
