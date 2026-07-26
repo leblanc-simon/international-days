@@ -84,6 +84,8 @@ La constante `OVERRIDES` (clé = nom exact de la journée) force la date des ent
 2. Remplacer le contenu JSON des deux fichiers `datas/*.json.php` (mettre à jour le commentaire d'année).
 3. Supprimer `cache/<ANNÉE>.php` (ou laisser `build-cache.php` le régénérer) — `cache/` est gitignored.
 
+`cleanData()` applique les mêmes règles de normalisation et la même table `overrides` que `bin/update-datas.php` : **les deux scripts doivent rester alignés** (sur les données actuelles, ils résolvent les 215 entrées à l'identique). Le script JS est hors du périmètre d'ESLint (`lint` et le hook pre-commit ne visent que `src/`) : c'est du code de console, pas du code applicatif.
+
 ## Conventions
 
 - ESLint : config `@vue/standard` + `plugin:vue/essential` (`.eslintrc.js`, format eslintrc classique, eslint 8), **indentation 4 espaces** (`indent: ['error', 4, { SwitchCase: 1 }]`). `no-console`/`no-debugger` en erreur uniquement en production.
