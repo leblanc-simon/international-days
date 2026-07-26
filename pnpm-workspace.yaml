@@ -1,2 +1,17 @@
 allowBuilds:
   simple-git-hooks: true
+
+# GHSA-mh99-v99m-4gvg (brace-expansion <= 5.0.7, DoS par expansion non bornée).
+# Correctif publié pour la seule branche 5.x, rien de rétroporté en 1.x/2.x.
+# Le paquet arrive au 7e niveau, uniquement à la construction :
+#   vite-plugin-pwa > workbox-build > ...off-main-thread > ejs > jake >
+#   filelist > minimatch@5 > brace-expansion@2
+# Forcer la 5.x casse minimatch : l'export CJS y est passé de la fonction à un
+# objet { expand }, et minimatch@5 lève « expand is not a function » dès qu'un
+# motif contient des accolades (vérifié).
+# Les motifs traités viennent de notre propre configuration, jamais d'une
+# entrée extérieure : rien à déclencher ici. À revoir dès qu'une 2.x corrigée
+# paraît, ou quand workbox-build se débarrassera de la chaîne ejs/jake.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-mh99-v99m-4gvg

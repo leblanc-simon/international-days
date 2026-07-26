@@ -33,6 +33,12 @@ En dev, l'API PHP est proxifiée : `vite.config.js` redirige `/api.php` vers `pr
 
 **Aucun script `test`** dans `package.json` ni de suite de tests dans le dépôt.
 
+### Audit de sécurité
+
+`pnpm audit` doit rester vert. Un avis y est explicitement ignoré, dans `pnpm-workspace.yaml` (`auditConfig.ignoreGhsas`) : **GHSA-mh99-v99m-4gvg** sur `brace-expansion`. Le correctif n'existe que sur la branche 5.x, et forcer cette majeure **casse `minimatch`** — l'export CJS y passe de la fonction à un objet `{ expand }`, d'où un « expand is not a function » sur tout motif à accolades. Le paquet arrive au 7e niveau d'une chaîne de construction (`vite-plugin-pwa > workbox-build > … > minimatch@5`) qui ne traite que nos propres motifs. À réexaminer dès qu'une 2.x corrigée paraît.
+
+Note : les overrides et `auditConfig` vivent dans **`pnpm-workspace.yaml`**, pas dans `package.json` — pnpm 11 ne lit plus le champ `pnpm` du manifeste (il l'ignore silencieusement, avec un simple avertissement).
+
 Les hooks git sont gérés par **`simple-git-hooks`** (`simple-git-hooks.pre-commit` → `pnpm exec lint-staged`). Le hook est (ré)installé par le postinstall de `simple-git-hooks` ; `lint-staged` lance `eslint --fix` sur les fichiers `src/**/*.{js,vue}` indexés. L'autorisation du script de build est dans `pnpm-workspace.yaml` (`allowBuilds.simple-git-hooks: true`).
 
 ## Architecture
