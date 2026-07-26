@@ -15,14 +15,14 @@ pnpm install          # installer les dépendances
 pnpm dev              # dev avec hot-reload (vite) — alias : pnpm serve
 pnpm build            # build de production dans dist/ (vite build)
 pnpm preview          # prévisualiser le build de production (vite preview)
-pnpm lint             # lint + fix (eslint --fix sur src/)
+pnpm lint             # eslint src (sans --fix ; le hook pre-commit, lui, corrige)
 ```
 
 En dev, l'API PHP est proxifiée : `vite.config.js` redirige `/api.php` vers `process.env.VITE_API_TARGET` (défaut `http://localhost:8000`). Lancer un serveur PHP en parallèle, ex. `php -S localhost:8000 -t public`.
 
 **Aucun script `test`** dans `package.json` ni de suite de tests dans le dépôt.
 
-Les hooks git sont gérés par **`simple-git-hooks`** (`simple-git-hooks.pre-commit` → `pnpm exec lint-staged`). Le hook est (ré)installé par le postinstall de `simple-git-hooks` ; `lint-staged` lance `eslint --fix` sur les fichiers `*.{js,vue}` indexés. L'autorisation du script de build est dans `pnpm-workspace.yaml` (`allowBuilds.simple-git-hooks: true`).
+Les hooks git sont gérés par **`simple-git-hooks`** (`simple-git-hooks.pre-commit` → `pnpm exec lint-staged`). Le hook est (ré)installé par le postinstall de `simple-git-hooks` ; `lint-staged` lance `eslint --fix` sur les fichiers `src/**/*.{js,vue}` indexés. L'autorisation du script de build est dans `pnpm-workspace.yaml` (`allowBuilds.simple-git-hooks: true`).
 
 ## Architecture
 
@@ -88,5 +88,8 @@ La constante `OVERRIDES` (clé = nom exact de la journée) force la date des ent
 
 ## Conventions
 
-- ESLint : config `@vue/standard` + `plugin:vue/essential` (`.eslintrc.js`, format eslintrc classique, eslint 8), **indentation 4 espaces** (`indent: ['error', 4, { SwitchCase: 1 }]`). `no-console`/`no-debugger` en erreur uniquement en production.
+- ESLint 10 en **flat config** (`eslint.config.mjs` — extension `.mjs` car le paquet n'est pas `"type": "module"`). Le préréglage `@vue/eslint-config-standard` a été retiré : il plafonne à ESLint 9. Le style est désormais composé sur place — `@eslint/js` recommended + `eslint-plugin-vue` (`flat/essential`) + `@stylistic/eslint-plugin` via `configs.customize({ indent: 4, quotes: 'single', semi: false, commaDangle: 'never', braceStyle: '1tbs' })`, complété par le volet non stylistique de « standard » (`eqeqeq`, `prefer-const`, `no-var`, `curly`…).
+- Cinq règles s'écartent volontairement des valeurs par défaut de `@stylistic` pour coller au code existant : `space-before-function-paren: always` (`data () {}`), `arrow-parens: off` (`month => {}`), `quotes` avec `avoidEscape`, `quote-props: as-needed`, `operator-linebreak: after`. **Y toucher réécrirait tous les fichiers au prochain `--fix`.**
+- Non repris de « standard » : les règles issues de `eslint-plugin-import-x`, `-n` et `-promise` (14 au total), pour ne pas traîner trois greffons de plus. Les règles Vue 2 disparues (`vue/no-v-model-argument`, `vue/valid-v-bind-sync`…) ne s'appliquaient de toute façon pas à ce projet Vue 3.
+- `no-console`/`no-debugger` en erreur uniquement en production (`NODE_ENV`).
 - `cache/`, `dist/`, `bin/config.php` et les fichiers `.env*.local` sont gitignored.
