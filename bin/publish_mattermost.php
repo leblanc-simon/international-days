@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/bootstrap.php';
+
 $cache_filename = __DIR__.'/../cache/'.date('Y').'.php';
 
 if (false === file_exists($cache_filename)) {

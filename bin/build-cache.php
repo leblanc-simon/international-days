@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/bootstrap.php';
+
 const CACHE_DIR = __DIR__.'/../cache';
 
 if (false === is_dir(CACHE_DIR)) {

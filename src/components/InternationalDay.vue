@@ -29,17 +29,6 @@
 import { getJson } from '../api'
 import WaitingLoader from './WaitingLoader.vue'
 
-// Date locale au format de l'API (Y-m-d), sans passer par UTC.
-const today = () => {
-    const now = new Date()
-
-    return [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, '0'),
-        String(now.getDate()).padStart(2, '0')
-    ].join('-')
-}
-
 export default {
     name: 'InternationalDay',
     components: { WaitingLoader },
@@ -54,14 +43,14 @@ export default {
     },
     created () {
         getJson('/api.php')
-            .then(data => {
+            .then(({ data, fromCache }) => {
                 this.loaded = true
                 this.internationalDays = data.datas
                 this.date = data.date
-                // Hors ligne, le service worker peut servir la réponse d'un
-                // jour précédent : autant le dire plutôt que d'afficher une
-                // date passée sans explication.
-                this.stale = data.date !== today()
+                // Hors ligne, le service worker ressort la réponse d'un jour
+                // précédent : autant le dire plutôt que d'afficher une date
+                // passée sans explication.
+                this.stale = fromCache
             })
             .catch(() => {
                 // Ni réseau ni cache : sans cela, le loader tournerait

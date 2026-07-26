@@ -20,6 +20,8 @@
  *                    (défaut : année courante).
  */
 
+require_once __DIR__.'/bootstrap.php';
+
 const WIKI_API = 'https://fr.wikipedia.org/w/api.php';
 const WIKI_PAGE = 'Journée internationale';
 

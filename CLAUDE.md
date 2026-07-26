@@ -54,7 +54,9 @@ L'application combine un **frontend Vue 3** statique et un **backend PHP minimal
    - sans paramètre → `{ date, datas }` pour aujourd'hui ;
    - `?month=N` (1-12) → liste des journées du mois.
 
-   Les réponses passent par `respond()`, qui pose `Cache-Control: public, max-age=<jusqu'à minuit>` et un `ETag` (md5 du corps) et répond `304` sur `If-None-Match`. Le TTL suit exactement la bascule de `date('Y-m-d')`, donc **dans le fuseau du serveur** (`date.timezone`) : une mise à jour des données en cours de journée n'est visible qu'au lendemain. En développement, prévoir un rechargement forcé ou « Disable cache » dans les DevTools. Une réponse `500` part en `no-store`.
+   Les réponses passent par `respond()`, qui pose `Cache-Control: public, max-age=<jusqu'à minuit>` et un `ETag` (md5 du corps) et répond `304` sur `If-None-Match`. Le TTL suit exactement la bascule de `date('Y-m-d')` : une réponse en cache ne peut donc jamais dater d'un autre jour, mais une mise à jour des données en cours de journée n'est visible qu'au lendemain. En développement, prévoir un rechargement forcé ou « Disable cache » dans les DevTools. Une réponse `500` part en `no-store`.
+
+**`bin/bootstrap.php` fixe le fuseau à `Europe/Paris`** et doit être requis en tête de tout point d'entrée PHP (`api.php`, `build-cache.php`, `publish_mattermost.php`, `update-datas.php`). Le fuseau du serveur n'est pas garanti — souvent UTC — et c'est lui qui décide de ce qu'est « aujourd'hui » : sans cette ligne, les journées affichées basculent à 2 h du matin heure française au lieu de minuit.
 
 ### Frontend
 
@@ -74,7 +76,8 @@ L'application combine un **frontend Vue 3** statique et un **backend PHP minimal
 - `/api.php` passe par une stratégie **`NetworkFirst`** (cache `api-data-v1`, délai réseau 4 s, expiration 30 jours) : en ligne les données sont toujours fraîches, le cache ne sert qu'en secours. Incrémenter le suffixe de `API_CACHE` repart d'un cache vide, l'ancien étant supprimé à l'activation.
 - **Préchargement de l'année à l'installation** : `warmApiCache()` demande le jour courant plus les douze mois (13 requêtes, ~19 Ko). Il passe par la stratégie et non par `cache.put()`, pour que l'expiration reste cohérente. Un échec ne fait pas échouer l'installation. L'application le redéclenche ensuite une fois par jour via le message `WARM_API_CACHE` (garde-fou `localStorage`, cf. `UpdateBanner.vue`), afin de rafraîchir les mois jamais ouverts.
 - **Mise à jour en `registerType: 'prompt'`** : `UpdateBanner.vue` (via `virtual:pwa-register/vue`) affiche un bandeau et n'applique la nouvelle version que sur clic — le SW n'appelle `skipWaiting()` qu'à réception du message `SKIP_WAITING`. `injectRegister` est donc à `null` : c'est le composant qui enregistre le SW.
-- Les trois appels du calendrier passent par `load(month)`, et les deux composants ont un **`.catch()`** : sans réseau ni cache, un message s'affiche au lieu du loader tournant indéfiniment. `InternationalDay` signale en plus des données périmées quand la date reçue n'est pas celle du jour.
+- Les trois appels du calendrier passent par `load(month)`, et les deux composants ont un **`.catch()`** : sans réseau ni cache, un message s'affiche au lieu du loader tournant indéfiniment.
+- Le service worker ajoute **`X-From-Cache: 1`** aux réponses qu'il ressort de son cache (greffon `cachedResponseWillBeUsed`), et `getJson()` le remonte en `fromCache`. C'est ce qui déclenche l'avertissement « données enregistrées hors ligne » d'`InternationalDay`. **Ne pas revenir à une comparaison entre la date reçue et l'horloge du navigateur** : les deux sont calculées dans des fuseaux différents, ce qui affichait l'avertissement en permanence entre minuit et 2 h du matin.
 - Le cache HTTP de `api.php` (cf. plus haut) fait une première ligne de défense : même cache SW vidé, le navigateur peut resservir les réponses tant que le `max-age` court.
 
 ### Publication Mattermost

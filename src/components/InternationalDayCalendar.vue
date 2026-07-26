@@ -2,11 +2,11 @@
     <div class="international-day-calendar" v-if="loaded">
         <nav>
             <div class="previous">
-                <span v-if="previousMonth >= 0" v-on:click="previous" class="link">{{ formatedMonth(previousMonth) }}</span>
+                <span v-if="previousMonth !== null" v-on:click="previous" class="link">{{ formatedMonth(previousMonth) }}</span>
             </div>
             <div class="current"><span>{{ formatedMonth(currentMonth) }}</span></div>
             <div class="next">
-                <span v-if="nextMonth" v-on:click="next" class="link">{{ formatedMonth(nextMonth) }}</span>
+                <span v-if="nextMonth !== null" v-on:click="next" class="link">{{ formatedMonth(nextMonth) }}</span>
             </div>
         </nav>
         <div v-if="internationalDays.length" class="">
@@ -98,7 +98,7 @@ export default {
         // donc le mois courant affiché.
         load (month) {
             getJson('/api.php?month=' + (month + 1))
-                .then(data => {
+                .then(({ data }) => {
                     this.internationalDays = convertByDay(data)
                     this.currentMonth = month
                     this.previousMonth = previousMonth(month)

@@ -38,12 +38,34 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), {
 
 /* -------------------------------- API ----------------------------------- */
 
+// Marque les réponses que l'on ressort du cache. L'application sait ainsi
+// qu'elle affiche des données hors ligne sans avoir à comparer la date reçue
+// à l'horloge du navigateur : ces deux dates sont calculées dans des fuseaux
+// différents, et la comparaison signalait des données périmées à tort.
+const markCachedResponse = {
+    cachedResponseWillBeUsed: async ({ cachedResponse }) => {
+        if (!cachedResponse) {
+            return cachedResponse
+        }
+
+        const headers = new Headers(cachedResponse.headers)
+        headers.set('X-From-Cache', '1')
+
+        return new Response(await cachedResponse.blob(), {
+            status: cachedResponse.status,
+            statusText: cachedResponse.statusText,
+            headers
+        })
+    }
+}
+
 // NetworkFirst : en ligne on affiche toujours des données fraîches, le cache
 // ne prend le relais qu'en cas d'échec ou de réseau trop lent.
 const apiStrategy = new NetworkFirst({
     cacheName: API_CACHE,
     networkTimeoutSeconds: 4,
     plugins: [
+        markCachedResponse,
         new CacheableResponsePlugin({ statuses: [200] }),
         new ExpirationPlugin({
             maxEntries: 20, // 12 mois + le jour courant, avec de la marge
