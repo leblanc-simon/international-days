@@ -8,6 +8,17 @@ Application web (Vue 3 + Vite) affichant les journées internationales du jour e
 
 ## Commandes
 
+Un `Makefile` couvre le quotidien (`make` seul affiche l'aide) :
+
+```bash
+make run              # Vite + le serveur PHP de l'API, Ctrl-C arrête les deux
+make build            # build de production dans dist/
+make lint             # eslint sur src/
+make install          # pnpm install
+```
+
+`make run` est le seul vrai raccourci : il évite d'ouvrir deux terminaux, puisque le front a besoin du serveur PHP en parallèle (voir plus bas). `PHP_HOST` (défaut `localhost:8000`) permet de changer le port de l'API. Chaque cible dépend de `node_modules`, réinstallé automatiquement dès que `package.json` ou `pnpm-lock.yaml` change.
+
 Le projet est passé de yarn à pnpm (présence de `pnpm-lock.yaml`, `yarn.lock` supprimé). Utiliser pnpm.
 
 ```bash
