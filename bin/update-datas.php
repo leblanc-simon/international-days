@@ -47,6 +47,20 @@ const DAYS = [
 const ORDINALS = [
     'premier' => 'first', '1er' => 'first', '1e' => 'first',
     'dernier' => 'last', '2e' => 'second', '3e' => 'third',
+    '4e' => 'fourth',
+];
+
+/**
+ * Corrections manuelles, appliquées avant toute analyse de la date.
+ *
+ * Réservé aux journées dont l'article ne donne aucune date exploitable.
+ * Clé = nom exact de la journée tel qu'extrait de la page.
+ */
+const OVERRIDES = [
+    // L'article indique seulement « En juin ». La date réelle change chaque
+    // année selon les éditions du GACG (6, 7, 10 ou 13 juin suivant les
+    // années) : on retient le 6 juin, date d'origine de la journée.
+    'journée mondiale anti-contrefaçon' => ['day' => 6],
 ];
 
 /* ------------------------------------------------------------------ */
@@ -168,11 +182,27 @@ function buildEntry(string $monthName, string $text, ?string $date, ?string $nam
         '_resolved' => true, // marqueur interne, retiré avant écriture
     ];
 
+    // Correction manuelle : prime sur ce que dit la page.
+    if (null !== $name && isset(OVERRIDES[$name])) {
+        return array_merge($entry, OVERRIDES[$name]);
+    }
+
     if (null === $date) {
         $entry['_resolved'] = false;
 
         return $entry;
     }
+
+    // « 28 ou 29 février » : dernier jour du mois, qui dépend de l'année
+    // bissextile -> date relative, résolue à l'année courante par
+    // build-cache.php. Février est le seul mois de longueur variable.
+    if (preg_match('/^28\s*(?:ou|\/|-)\s*29\s+février$/iu', $date)) {
+        $entry['customDay'] = 'last day of february';
+
+        return $entry;
+    }
+
+    $date = normalizeDate($date);
 
     // Date fixe : « 1er janvier », « 4 janvier », ...
     $dateRegex = '/^([0-9]+)(er)?\s'.preg_quote($monthName, '/').'/iu';
@@ -182,15 +212,25 @@ function buildEntry(string $monthName, string $text, ?string $date, ?string $nam
         return $entry;
     }
 
-    // Date relative : « 2e lundi de février » -> « second monday of february »
-    $ordinalRegex = '/^('.implode('|', array_map(
+    $ordinals = implode('|', array_map(
         static fn ($k) => preg_quote($k, '/'),
         array_keys(ORDINALS)
-    )).')\s('.implode('|', array_keys(DAYS)).')/iu';
-    if (preg_match($ordinalRegex, $date, $m)) {
+    ));
+
+    // Date relative : « 2e lundi de février » -> « second monday of february »
+    if (preg_match('/^('.$ordinals.')\s('.implode('|', array_keys(DAYS)).')/iu', $date, $m)) {
         $ordinal = ORDINALS[mb_strtolower($m[1])];
         $day = DAYS[mb_strtolower($m[2])];
         $entry['customDay'] = $ordinal.' '.$day.' of '.ENGLISH_MONTHS[$monthName];
+
+        return $entry;
+    }
+
+    // Week-end (le mois reste souvent implicite dans la page) : on retient le
+    // samedi, premier jour du week-end. « 3e week-end » -> « third saturday
+    // of september ».
+    if (preg_match('/^('.$ordinals.')\s+week[- ]?end/iu', $date, $m)) {
+        $entry['customDay'] = ORDINALS[mb_strtolower($m[1])].' saturday of '.ENGLISH_MONTHS[$monthName];
 
         return $entry;
     }
@@ -199,6 +239,31 @@ function buildEntry(string $monthName, string $text, ?string $date, ?string $nam
     $entry['_resolved'] = false;
 
     return $entry;
+}
+
+/**
+ * Ramène les dates approximatives de l'article à une forme analysable.
+ *
+ *   « À partir du 20 avril »      -> « 20 avril »
+ *   « Équinoxe (20 ou 21 mars) »  -> « 20 mars »
+ *   « 6 / 8 février »             -> « 6 février »
+ *
+ * Quand la page hésite entre plusieurs jours, on retient le premier.
+ */
+function normalizeDate(string $date): string
+{
+    // Préfixes qui n'apportent pas de date.
+    $date = preg_replace('/^(?:à partir du|à partir de|vers le|le)\s+/iu', '', $date);
+
+    // Précision entre parenthèses : c'est elle qui porte la date.
+    if (preg_match('/\(([^)]*[0-9][^)]*)\)/u', $date, $m)) {
+        $date = trim($m[1]);
+    }
+
+    // Jour incertain ou plage de jours : on garde le premier.
+    $date = preg_replace('/^([0-9]+)(?:\s*(?:ou|\/|-|–|et|à)\s*[0-9]+)+/u', '$1', $date);
+
+    return trim($date);
 }
 
 /**

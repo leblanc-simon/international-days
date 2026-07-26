@@ -62,7 +62,21 @@ php bin/update-datas.php --rebuild-cache # + supprime cache/<ANNÉE>.php pour fo
 php bin/update-datas.php --year=2027     # force l'année de référence du commentaire
 ```
 
-Le script affiche le nombre de journées extraites et **liste les entrées dont la date n'a pas pu être résolue** (`day`/`customDay` absents — ex. « 28 ou 29 février », « En juin », équinoxes). Ces cas, déjà signalés par `console.warn` dans le script JS d'origine, sont conservés tels quels et doivent être corrigés/complétés à la main si besoin.
+Le script affiche le nombre de journées extraites et **liste les entrées dont la date n'a pas pu être résolue** (`day`/`customDay` absents). Ces cas, déjà signalés par `console.warn` dans le script JS d'origine, sont conservés tels quels et doivent être corrigés/complétés à la main si besoin.
+
+Les formulations approximatives de l'article sont ramenées à une date exploitable (`buildEntry()` / `normalizeDate()`) :
+
+| Sur la page | Résultat |
+| --- | --- |
+| `6 / 8 février`, `21 ou 22 décembre` | premier jour cité (`day`) |
+| `À partir du 20 avril` | `day: 20` — préfixes `à partir du`, `vers le`, `le` retirés |
+| `Équinoxe (20 ou 21 mars)` | `day: 20` — c'est la parenthèse qui porte la date |
+| `28 ou 29 février` | `customDay: last day of february` (suit les années bissextiles) |
+| `3e week-end` | `customDay: third saturday of september` — le samedi, mois déduit de la section |
+
+La constante `OVERRIDES` (clé = nom exact de la journée) force la date des entrées que l'article ne date pas du tout, comme « journée mondiale anti-contrefaçon » (« En juin » — la date réelle change chaque année). Elle prime sur tout le reste.
+
+**Ces règles vivent dans le script, pas dans les données** : corriger `datas/*.json.php` à la main serait écrasé à la prochaine exécution.
 
 ### Manuelle (méthode historique)
 

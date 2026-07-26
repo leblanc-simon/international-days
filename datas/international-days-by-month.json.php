@@ -87,7 +87,8 @@ return <<<EOF
         "text": "6 / 8 février : journée mondiale sans téléphone portable",
         "date": "6 / 8 février",
         "name": "journée mondiale sans téléphone portable",
-        "month": 2
+        "month": 2,
+        "day": 6
     }, {
         "text": "10 février : journée internationale des légumineuses (ONU)",
         "date": "10 février",
@@ -164,7 +165,8 @@ return <<<EOF
         "text": "28 ou 29 février : journée mondiale des maladies rares",
         "date": "28 ou 29 février",
         "name": "journée mondiale des maladies rares",
-        "month": 2
+        "month": 2,
+        "customDay": "last day of february"
     }],
     "Mars": [{
         "text": "3e vendredi de mars : journée internationale du sommeil",
@@ -248,7 +250,8 @@ return <<<EOF
         "text": "Équinoxe (20 ou 21 mars) : Jour de la Terre",
         "date": "Équinoxe (20 ou 21 mars)",
         "name": "Jour de la Terre",
-        "month": 3
+        "month": 3,
+        "day": 20
     }, {
         "text": "journée internationale des forêts (ONU)",
         "date": "21 mars",
@@ -398,7 +401,8 @@ return <<<EOF
         "text": "À partir du 20 avril : semaine mondiale de la vaccination (OMS)",
         "date": "À partir du 20 avril",
         "name": "semaine mondiale de la vaccination (OMS)",
-        "month": 4
+        "month": 4,
+        "day": 20
     }, {
         "text": "22 avril : Jour internationale de la Terre nourricière (ONU)",
         "date": "22 avril",
@@ -603,7 +607,8 @@ return <<<EOF
         "text": "En juin : journée mondiale anti-contrefaçon",
         "date": "En juin",
         "name": "journée mondiale anti-contrefaçon",
-        "month": 6
+        "month": 6,
+        "day": 6
     }, {
         "text": "3 juin : journée mondiale de la bicyclette (ONU)",
         "date": "3 juin",
@@ -851,7 +856,8 @@ return <<<EOF
         "text": "3e week-end : journées européennes du patrimoine",
         "date": "3e week-end",
         "name": "journées européennes du patrimoine",
-        "month": 9
+        "month": 9,
+        "customDay": "third saturday of september"
     }, {
         "text": "journée mondiale du nettoyage",
         "date": "3e samedi",
@@ -1297,7 +1303,8 @@ return <<<EOF
         "text": "21 ou 22 décembre : journée mondiale de l'orgasme",
         "date": "21 ou 22 décembre",
         "name": "journée mondiale de l'orgasme",
-        "month": 12
+        "month": 12,
+        "day": 21
     }]
 }
 EOF;
