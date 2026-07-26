@@ -59,16 +59,18 @@ L'application combine un **frontend Vue 3** statique et un **backend PHP minimal
 ### Frontend
 
 - `src/main.js` : crée l'app Vue 3, monte `#app`, configure **dayjs** (locale `fr` + plugin `localizedFormat`, défini une seule fois globalement) et expose `formatedMonth`/`formatedDate` comme `globalProperties`.
+- `src/api.js` : `getJson(path)`, seul point d'accès à l'API. **Il lève sur `!response.ok`** : `fetch` ne rejette que sur une panne réseau, un 4xx/5xx arrive comme une réponse ordinaire. Sans ce garde-fou, une API en erreur passerait pour un succès et les composants afficheraient un contenu vide (`data.datas === undefined`) au lieu de leur message d'indisponibilité. `apiBaseUrl` y est centralisé (chaîne vide : l'API est servie sur la même origine que le build).
+- Pas de client HTTP : **axios a été retiré** au profit de `fetch`. L'usage se limitait à deux `GET` sans option, et tout navigateur capable de faire tourner un service worker sait faire `fetch`. Le bundle est passé de 124 à 79 Ko (47 → 31 Ko gzip).
 - `src/components/InternationalDay.vue` : appelle `GET /api.php` (journées du jour).
 - `src/components/InternationalDayCalendar.vue` : appelle `GET /api.php?month=N`, navigation mois précédent/suivant ; `convertByDay()` regroupe la liste plate par date pour l'affichage.
-- `apiBaseUrl` est codé en dur à `''` dans les deux composants (API servie sur la même origine que le build).
 - `index.html` est à la **racine** du projet (point d'entrée Vite), pas dans `public/`. Les assets de `public/` (polices, icônes, `loader.svg`, `api.php`) se référencent en chemin **absolu** (`/fonts/...`, `/img/...`) et sont copiés tels quels dans `dist/`.
+
 ### PWA et fonctionnement hors ligne
 
 **L'application est entièrement utilisable hors ligne**, y compris pour un mois jamais ouvert.
 
 - `vite-plugin-pwa` en **`strategies: 'injectManifest'`** : le service worker est **`src/sw.js`**, versionné et modifiable — Workbox n'y injecte que la liste de precache. C'est là qu'on intervient pour changer une stratégie de cache. Le `manifest.webmanifest` reste généré par le plugin, et le SW n'est actif qu'en production.
-- Precache : 22 fichiers, 183 Ko. Les fichiers de `public/` ne sont **pas** repris d'office : d'où `includeAssets` (`img/**`, `fonts/*.woff2`) et surtout `injectManifest.globIgnores` qui écarte `fonts/*.{eot,ttf,woff,svg}` — le `.svg` de la police pèse à lui seul 81 Ko et le motif `**/*.svg` l'attraperait.
+- Precache : 22 fichiers, 139 Ko. Les fichiers de `public/` ne sont **pas** repris d'office : d'où `includeAssets` (`img/**`, `fonts/*.woff2`) et surtout `injectManifest.globIgnores` qui écarte `fonts/*.{eot,ttf,woff,svg}` — le `.svg` de la police pèse à lui seul 81 Ko et le motif `**/*.svg` l'attraperait.
 - `/api.php` passe par une stratégie **`NetworkFirst`** (cache `api-data-v1`, délai réseau 4 s, expiration 30 jours) : en ligne les données sont toujours fraîches, le cache ne sert qu'en secours. Incrémenter le suffixe de `API_CACHE` repart d'un cache vide, l'ancien étant supprimé à l'activation.
 - **Préchargement de l'année à l'installation** : `warmApiCache()` demande le jour courant plus les douze mois (13 requêtes, ~19 Ko). Il passe par la stratégie et non par `cache.put()`, pour que l'expiration reste cohérente. Un échec ne fait pas échouer l'installation. L'application le redéclenche ensuite une fois par jour via le message `WARM_API_CACHE` (garde-fou `localStorage`, cf. `UpdateBanner.vue`), afin de rafraîchir les mois jamais ouverts.
 - **Mise à jour en `registerType: 'prompt'`** : `UpdateBanner.vue` (via `virtual:pwa-register/vue`) affiche un bandeau et n'applique la nouvelle version que sur clic — le SW n'appelle `skipWaiting()` qu'à réception du message `SKIP_WAITING`. `injectRegister` est donc à `null` : c'est le composant qui enregistre le SW.

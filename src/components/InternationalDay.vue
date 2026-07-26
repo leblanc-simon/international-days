@@ -26,10 +26,8 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { getJson } from '../api'
 import WaitingLoader from './WaitingLoader.vue'
-
-const apiBaseUrl = ''
 
 // Date locale au format de l'API (Y-m-d), sans passer par UTC.
 const today = () => {
@@ -55,15 +53,15 @@ export default {
         }
     },
     created () {
-        axios.get(apiBaseUrl + '/api.php')
-            .then(response => {
+        getJson('/api.php')
+            .then(data => {
                 this.loaded = true
-                this.internationalDays = response.data.datas
-                this.date = response.data.date
+                this.internationalDays = data.datas
+                this.date = data.date
                 // Hors ligne, le service worker peut servir la réponse d'un
                 // jour précédent : autant le dire plutôt que d'afficher une
                 // date passée sans explication.
-                this.stale = response.data.date !== today()
+                this.stale = data.date !== today()
             })
             .catch(() => {
                 // Ni réseau ni cache : sans cela, le loader tournerait

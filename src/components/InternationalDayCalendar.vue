@@ -38,10 +38,8 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { getJson } from '../api'
 import WaitingLoader from './WaitingLoader.vue'
-
-const apiBaseUrl = ''
 
 const previousMonth = currentMonth => {
     if (currentMonth === 0) {
@@ -99,9 +97,9 @@ export default {
         // mois demandé qu'une fois ses données obtenues, et un échec laisse
         // donc le mois courant affiché.
         load (month) {
-            axios.get(apiBaseUrl + '/api.php?month=' + (month + 1))
-                .then(response => {
-                    this.internationalDays = convertByDay(response.data)
+            getJson('/api.php?month=' + (month + 1))
+                .then(data => {
+                    this.internationalDays = convertByDay(data)
                     this.currentMonth = month
                     this.previousMonth = previousMonth(month)
                     this.nextMonth = nextMonth(month)
