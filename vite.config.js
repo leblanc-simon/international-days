@@ -10,7 +10,17 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
-            includeAssets: ['favicon.ico', 'robots.txt', 'img/icons/apple-touch-icon.png'],
+            // Les fichiers de public/ ne sont pas précachés d'office : sans
+            // cette liste, le loader et la police manquent hors ligne. Des
+            // cinq formats de la police, seul woff2 est repris — il est
+            // couvert par tous les navigateurs qui savent faire tourner un
+            // service worker, et les quatre autres pèsent 188 ko à eux seuls.
+            includeAssets: [
+                'favicon.ico',
+                'robots.txt',
+                'img/**',
+                'fonts/*.woff2'
+            ],
             manifest: {
                 name: 'international-days',
                 short_name: 'international-days',

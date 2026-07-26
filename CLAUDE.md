@@ -48,6 +48,8 @@ L'application combine un **frontend Vue 3** statique et un **backend PHP minimal
    - sans paramètre → `{ date, datas }` pour aujourd'hui ;
    - `?month=N` (1-12) → liste des journées du mois.
 
+   Les réponses passent par `respond()`, qui pose `Cache-Control: public, max-age=<jusqu'à minuit>` et un `ETag` (md5 du corps) et répond `304` sur `If-None-Match`. Le TTL suit exactement la bascule de `date('Y-m-d')`, donc **dans le fuseau du serveur** (`date.timezone`) : une mise à jour des données en cours de journée n'est visible qu'au lendemain. En développement, prévoir un rechargement forcé ou « Disable cache » dans les DevTools. Une réponse `500` part en `no-store`.
+
 ### Frontend
 
 - `src/main.js` : crée l'app Vue 3, monte `#app`, configure **dayjs** (locale `fr` + plugin `localizedFormat`, défini une seule fois globalement) et expose `formatedMonth`/`formatedDate` comme `globalProperties`.
@@ -56,6 +58,8 @@ L'application combine un **frontend Vue 3** statique et un **backend PHP minimal
 - `apiBaseUrl` est codé en dur à `''` dans les deux composants (API servie sur la même origine que le build).
 - `index.html` est à la **racine** du projet (point d'entrée Vite), pas dans `public/`. Les assets de `public/` (polices, icônes, `loader.svg`, `api.php`) se référencent en chemin **absolu** (`/fonts/...`, `/img/...`) et sont copiés tels quels dans `dist/`.
 - PWA activée via **`vite-plugin-pwa`** (config dans `vite.config.js` : `registerType: 'autoUpdate'`, `injectRegister: 'auto'` — la registration du service worker est injectée automatiquement, il n'y a plus de `registerServiceWorker.js`). Le `manifest.webmanifest` est généré par le plugin. SW en production uniquement.
+- Precache : 22 fichiers, 172 Ko. Les fichiers de `public/` ne sont **pas** repris d'office par le plugin, d'où la liste `includeAssets` (`img/**`, `fonts/*.woff2`) — sans elle, `loader.svg` et la police manquaient hors ligne. Seul le `woff2` de la police est précaché ; les quatre autres formats pèsent 188 Ko et ne servent qu'à des navigateurs sans service worker.
+- **`/api.php` n'est pas mis en cache côté client** : il est exclu du fallback de navigation (`navigateFallbackDenylist`) et aucun `runtimeCaching` n'est défini. Hors ligne, la coquille se charge mais les appels échouent — et comme les composants n'ont **aucun `.catch()`**, `loaded` reste `false` et le loader tourne indéfiniment. L'app est installable, pas utilisable hors ligne.
 
 ### Publication Mattermost
 
