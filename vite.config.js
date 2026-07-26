@@ -8,8 +8,25 @@ export default defineConfig({
     plugins: [
         vue(),
         VitePWA({
-            registerType: 'autoUpdate',
-            injectRegister: 'auto',
+            // injectManifest : le service worker est écrit à la main dans
+            // src/sw.js (cache de l'API, préchargement de l'année), Workbox
+            // n'y injecte que la liste de precache.
+            strategies: 'injectManifest',
+            srcDir: 'src',
+            filename: 'sw.js',
+            // 'prompt' : la nouvelle version attend que l'utilisateur
+            // l'accepte (cf. UpdateBanner.vue) au lieu de s'installer sous
+            // ses pieds. L'enregistrement passe par virtual:pwa-register/vue,
+            // d'où injectRegister à null.
+            registerType: 'prompt',
+            injectRegister: null,
+            injectManifest: {
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,txt,webmanifest}'],
+                // Les formats de police historiques pèsent 188 Ko (dont 81 pour
+                // le seul .svg, que le motif ci-dessus attrape) et ne servent
+                // qu'à des navigateurs sans service worker.
+                globIgnores: ['fonts/*.{eot,ttf,woff,svg}']
+            },
             // Les fichiers de public/ ne sont pas précachés d'office : sans
             // cette liste, le loader et la police manquent hors ligne. Des
             // cinq formats de la police, seul woff2 est repris — il est

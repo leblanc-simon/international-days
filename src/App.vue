@@ -1,5 +1,6 @@
 <template>
     <div id="app">
+        <UpdateBanner/>
         <InternationalDay/>
         <InternationalDayCalendar/>
         <footer>
@@ -12,12 +13,14 @@
 <script>
 import InternationalDay from './components/InternationalDay.vue'
 import InternationalDayCalendar from './components/InternationalDayCalendar.vue'
+import UpdateBanner from './components/UpdateBanner.vue'
 
 export default {
     name: 'app',
     components: {
         InternationalDay,
-        InternationalDayCalendar
+        InternationalDayCalendar,
+        UpdateBanner
     }
 }
 </script>

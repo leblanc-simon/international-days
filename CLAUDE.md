@@ -57,9 +57,17 @@ L'application combine un **frontend Vue 3** statique et un **backend PHP minimal
 - `src/components/InternationalDayCalendar.vue` : appelle `GET /api.php?month=N`, navigation mois précédent/suivant ; `convertByDay()` regroupe la liste plate par date pour l'affichage.
 - `apiBaseUrl` est codé en dur à `''` dans les deux composants (API servie sur la même origine que le build).
 - `index.html` est à la **racine** du projet (point d'entrée Vite), pas dans `public/`. Les assets de `public/` (polices, icônes, `loader.svg`, `api.php`) se référencent en chemin **absolu** (`/fonts/...`, `/img/...`) et sont copiés tels quels dans `dist/`.
-- PWA activée via **`vite-plugin-pwa`** (config dans `vite.config.js` : `registerType: 'autoUpdate'`, `injectRegister: 'auto'` — la registration du service worker est injectée automatiquement, il n'y a plus de `registerServiceWorker.js`). Le `manifest.webmanifest` est généré par le plugin. SW en production uniquement.
-- Precache : 22 fichiers, 172 Ko. Les fichiers de `public/` ne sont **pas** repris d'office par le plugin, d'où la liste `includeAssets` (`img/**`, `fonts/*.woff2`) — sans elle, `loader.svg` et la police manquaient hors ligne. Seul le `woff2` de la police est précaché ; les quatre autres formats pèsent 188 Ko et ne servent qu'à des navigateurs sans service worker.
-- **`/api.php` n'est pas mis en cache côté client** : il est exclu du fallback de navigation (`navigateFallbackDenylist`) et aucun `runtimeCaching` n'est défini. Hors ligne, la coquille se charge mais les appels échouent — et comme les composants n'ont **aucun `.catch()`**, `loaded` reste `false` et le loader tourne indéfiniment. L'app est installable, pas utilisable hors ligne.
+### PWA et fonctionnement hors ligne
+
+**L'application est entièrement utilisable hors ligne**, y compris pour un mois jamais ouvert.
+
+- `vite-plugin-pwa` en **`strategies: 'injectManifest'`** : le service worker est **`src/sw.js`**, versionné et modifiable — Workbox n'y injecte que la liste de precache. C'est là qu'on intervient pour changer une stratégie de cache. Le `manifest.webmanifest` reste généré par le plugin, et le SW n'est actif qu'en production.
+- Precache : 22 fichiers, 183 Ko. Les fichiers de `public/` ne sont **pas** repris d'office : d'où `includeAssets` (`img/**`, `fonts/*.woff2`) et surtout `injectManifest.globIgnores` qui écarte `fonts/*.{eot,ttf,woff,svg}` — le `.svg` de la police pèse à lui seul 81 Ko et le motif `**/*.svg` l'attraperait.
+- `/api.php` passe par une stratégie **`NetworkFirst`** (cache `api-data-v1`, délai réseau 4 s, expiration 30 jours) : en ligne les données sont toujours fraîches, le cache ne sert qu'en secours. Incrémenter le suffixe de `API_CACHE` repart d'un cache vide, l'ancien étant supprimé à l'activation.
+- **Préchargement de l'année à l'installation** : `warmApiCache()` demande le jour courant plus les douze mois (13 requêtes, ~19 Ko). Il passe par la stratégie et non par `cache.put()`, pour que l'expiration reste cohérente. Un échec ne fait pas échouer l'installation. L'application le redéclenche ensuite une fois par jour via le message `WARM_API_CACHE` (garde-fou `localStorage`, cf. `UpdateBanner.vue`), afin de rafraîchir les mois jamais ouverts.
+- **Mise à jour en `registerType: 'prompt'`** : `UpdateBanner.vue` (via `virtual:pwa-register/vue`) affiche un bandeau et n'applique la nouvelle version que sur clic — le SW n'appelle `skipWaiting()` qu'à réception du message `SKIP_WAITING`. `injectRegister` est donc à `null` : c'est le composant qui enregistre le SW.
+- Les trois appels du calendrier passent par `load(month)`, et les deux composants ont un **`.catch()`** : sans réseau ni cache, un message s'affiche au lieu du loader tournant indéfiniment. `InternationalDay` signale en plus des données périmées quand la date reçue n'est pas celle du jour.
+- Le cache HTTP de `api.php` (cf. plus haut) fait une première ligne de défense : même cache SW vidé, le navigateur peut resservir les réponses tant que le `max-age` court.
 
 ### Publication Mattermost
 

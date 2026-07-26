@@ -1,6 +1,9 @@
 <template>
     <div class="international-day" v-if="loaded">
         <div class="title">{{ formatedDate(date) }}</div>
+        <div class="stale" v-if="stale">
+            Données enregistrées hors ligne : elles ne sont plus à jour.
+        </div>
         <div v-if="internationalDays.length" class="">
             <ul>
                 <li v-for="internationalDay in internationalDays"
@@ -14,6 +17,9 @@
             Aucune journée internationale, aujourd'hui...
         </div>
     </div>
+    <div class="unavailable" v-else-if="failed">
+        Journées du jour indisponibles : aucune connexion et rien en cache.
+    </div>
     <div v-else>
         <waiting-loader></waiting-loader>
     </div>
@@ -25,12 +31,25 @@ import WaitingLoader from './WaitingLoader.vue'
 
 const apiBaseUrl = ''
 
+// Date locale au format de l'API (Y-m-d), sans passer par UTC.
+const today = () => {
+    const now = new Date()
+
+    return [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+    ].join('-')
+}
+
 export default {
     name: 'InternationalDay',
     components: { WaitingLoader },
     data () {
         return {
             loaded: false,
+            failed: false,
+            stale: false,
             internationalDays: [],
             date: null
         }
@@ -41,6 +60,15 @@ export default {
                 this.loaded = true
                 this.internationalDays = response.data.datas
                 this.date = response.data.date
+                // Hors ligne, le service worker peut servir la réponse d'un
+                // jour précédent : autant le dire plutôt que d'afficher une
+                // date passée sans explication.
+                this.stale = response.data.date !== today()
+            })
+            .catch(() => {
+                // Ni réseau ni cache : sans cela, le loader tournerait
+                // indéfiniment.
+                this.failed = true
             })
     }
 }
@@ -69,6 +97,18 @@ li {
     }
 }
 .nothing {
+    font-size: 1.5rem;
+}
+.stale {
+    /* remonte sous le titre, qui porte déjà une marge de 3rem */
+    margin: -2rem 0 2rem 0;
+    font-size: 1rem;
+    opacity: 0.85;
+}
+.unavailable {
+    background: #282828;
+    color: #ffffff;
+    padding: 4rem;
     font-size: 1.5rem;
 }
 </style>

@@ -62,6 +62,15 @@ export default [
     },
 
     {
+        // Le service worker ne tourne pas dans une page : ni window ni
+        // document, mais self, caches, clients et skipWaiting.
+        files: ['src/sw.js'],
+        languageOptions: {
+            globals: globals.serviceworker
+        }
+    },
+
+    {
         // Volet non stylistique de « standard » : ces règles ne dépendent
         // d'aucun greffon, on les reprend telles qu'elles étaient appliquées
         // avant la migration.

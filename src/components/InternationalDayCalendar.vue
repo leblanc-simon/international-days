@@ -25,6 +25,12 @@
                 </li>
             </ul>
         </div>
+        <div class="unavailable" v-if="failed">
+            Ce mois n'est pas disponible hors ligne.
+        </div>
+    </div>
+    <div class="unavailable" v-else-if="failed">
+        Calendrier indisponible : aucune connexion et rien en cache.
     </div>
     <div v-else>
         <waiting-loader></waiting-loader>
@@ -78,6 +84,7 @@ export default {
         const currentNextMonth = nextMonth(date.getMonth())
         return {
             loaded: false,
+            failed: false,
             internationalDays: [],
             previousMonth: currentPreviousMonth,
             currentMonth: date.getMonth(),
@@ -85,30 +92,31 @@ export default {
         }
     },
     created () {
-        axios.get(apiBaseUrl + '/api.php?month=' + (this.currentMonth + 1))
-            .then(response => {
-                this.loaded = true
-                this.internationalDays = convertByDay(response.data)
-            })
+        this.load(this.currentMonth)
     },
     methods: {
-        next () {
-            axios.get(apiBaseUrl + '/api.php?month=' + (nextMonth(this.currentMonth) + 1))
+        // Point d'entrée unique des trois chargements : on ne bascule sur le
+        // mois demandé qu'une fois ses données obtenues, et un échec laisse
+        // donc le mois courant affiché.
+        load (month) {
+            axios.get(apiBaseUrl + '/api.php?month=' + (month + 1))
                 .then(response => {
                     this.internationalDays = convertByDay(response.data)
-                    this.previousMonth = this.currentMonth
-                    this.currentMonth = nextMonth(this.currentMonth)
-                    this.nextMonth = nextMonth(this.currentMonth)
+                    this.currentMonth = month
+                    this.previousMonth = previousMonth(month)
+                    this.nextMonth = nextMonth(month)
+                    this.loaded = true
+                    this.failed = false
+                })
+                .catch(() => {
+                    this.failed = true
                 })
         },
+        next () {
+            this.load(nextMonth(this.currentMonth))
+        },
         previous () {
-            axios.get(apiBaseUrl + '/api.php?month=' + (previousMonth(this.currentMonth) + 1))
-                .then(response => {
-                    this.internationalDays = convertByDay(response.data)
-                    this.nextMonth = this.currentMonth
-                    this.currentMonth = previousMonth(this.currentMonth)
-                    this.previousMonth = previousMonth(this.currentMonth)
-                })
+            this.load(previousMonth(this.currentMonth))
         }
     }
 }
@@ -116,6 +124,11 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="css">
+.unavailable {
+    padding: 2rem;
+    text-align: center;
+    font-size: 1.2rem;
+}
 nav {
     display: flex;
     padding: 1rem;
