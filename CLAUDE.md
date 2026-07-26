@@ -15,7 +15,10 @@ make run              # Vite + le serveur PHP de l'API, Ctrl-C arrête les deux
 make build            # build de production dans dist/
 make lint             # eslint sur src/
 make install          # pnpm install
+make clean            # supprime dist/ et dev-dist/ (ni node_modules, ni cache/)
 ```
+
+Le déploiement passe par un **`deploy.sh` volontairement non versionné** (il porte la cible de production, l'utilisateur propriétaire et les chemins) : `make clean` + `make install` + `make build`, puis rsync avec un `--chown` vers le compte qui sert le site. Il synchronise **`bin/` et `datas/` avant `dist/`** — `api.php` remonte d'un cran vers `bin/build-cache.php` et `datas/`, un `dist/` livré seul renvoie donc une erreur 500 — puis les assets avant le reste du build, et purge enfin `cache/*.php`. `bin/config.php` est exclu : il porte `MATTERMOST_KOOK_URL` côté production. `./deploy.sh --dry-run` simule sans rien écrire.
 
 `make run` est le seul vrai raccourci : il évite d'ouvrir deux terminaux, puisque le front a besoin du serveur PHP en parallèle (voir plus bas). `PHP_HOST` (défaut `localhost:8000`) permet de changer le port de l'API. Chaque cible dépend de `node_modules`, réinstallé automatiquement dès que `package.json` ou `pnpm-lock.yaml` change.
 

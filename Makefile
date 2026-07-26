@@ -6,7 +6,7 @@ PHP      ?= php
 PHP_HOST ?= localhost:8000
 
 .DEFAULT_GOAL := help
-.PHONY: help install run build lint
+.PHONY: help install run build lint clean
 
 help: ## Affiche cette aide
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) \
@@ -31,3 +31,8 @@ build: node_modules ## Build de production dans dist/
 
 lint: node_modules ## Vérifie le style du code de src/
 	$(PNPM) lint
+
+# Ne touche pas à node_modules (`rm -rf node_modules` si besoin) ni à cache/,
+# dont les fichiers des années passées ne sont plus régénérables.
+clean: ## Supprime les artefacts de build (dist/, dev-dist/)
+	rm -rf dist dev-dist
